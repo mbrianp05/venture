@@ -132,7 +132,7 @@ export function RevenueChart({ datos, className }) {
                 axisLine={false}
                 tick={{ fill: COLORES.muted, fontSize: 10 }}
                 tickFormatter={formatearEjeMoneda}
-                width={48}
+                width={56}
               />
               <Tooltip
                 cursor={{ stroke: COLORES.highlight, strokeOpacity: 0.35 }}
