@@ -72,7 +72,9 @@ function ChartTooltip({ active, payload, titulo, detalle }) {
   )
 }
 
-function EjeMoneda({ valor }) {
+// Recharts pasa el valor de la marca directamente (no un objeto), por eso no
+// se desestructura: hacerlo dejaba todas las marcas del eje en «0 $».
+function formatearEjeMoneda(valor) {
   return `${formatearCompacto(valor)} $`
 }
 
@@ -129,7 +131,7 @@ export function RevenueChart({ datos, className }) {
                 tickLine={false}
                 axisLine={false}
                 tick={{ fill: COLORES.muted, fontSize: 10 }}
-                tickFormatter={EjeMoneda}
+                tickFormatter={formatearEjeMoneda}
                 width={48}
               />
               <Tooltip
