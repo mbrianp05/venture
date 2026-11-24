@@ -59,6 +59,18 @@ def _dinero(valor):
     return Decimal(str(valor or 0)).quantize(CENTAVOS, rounding=ROUND_HALF_UP)
 
 
+def _fotos_limpias(valores):
+    """URLs de fotos como texto plano, sin entradas vacías ni no textuales."""
+    fotos = []
+    for valor in valores or ():
+        if not isinstance(valor, str):
+            continue
+        url = sin_etiquetas(valor).strip()
+        if url:
+            fotos.append(url)
+    return fotos
+
+
 def _producto_desde_filas(producto):
     return producto.to_dict()
 
@@ -281,7 +293,7 @@ async def crear_producto(datos):
         )
         producto.fotos = [
             ProductoFoto(url=url, orden=indice)
-            for indice, url in enumerate(datos.get("fotos") or [])
+            for indice, url in enumerate(_fotos_limpias(datos.get("fotos")))
         ]
         descuento = datos.get("descuento")
         if descuento:
@@ -372,7 +384,9 @@ async def actualizar_producto(nombre_original, cambios):
             producto.fotos.clear()
             producto.fotos.extend(
                 ProductoFoto(url=url, orden=indice)
-                for indice, url in enumerate(cambios.get("fotos") or [])
+                for indice, url in enumerate(
+                    _fotos_limpias(cambios.get("fotos"))
+                )
             )
 
         await sesion.flush()
