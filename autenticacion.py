@@ -11,6 +11,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from zxcvbn import zxcvbn
 
 from models.Usuario import Usuario
+from texto import sin_etiquetas
 
 PASSWORD_MIN_LENGTH = 8
 PASSWORD_MAX_LENGTH = 128
@@ -92,10 +93,10 @@ def crear_usuario(
     rol=ROL_POR_DEFECTO,
 ):
     return Usuario(
-        usuario=usuario,
-        nombres=nombres,
-        apellidos=apellidos,
-        email=email,
+        usuario=sin_etiquetas(usuario).strip(),
+        nombres=sin_etiquetas(nombres).strip(),
+        apellidos=sin_etiquetas(apellidos).strip(),
+        email=sin_etiquetas(email).strip(),
         password_hash=generate_password_hash(password),
         creado=datetime.now(timezone.utc),
         rol=normalizar_rol(rol),
@@ -161,8 +162,8 @@ def validar_perfil(datos, nombres_existentes, cuenta):
     """Valida los datos editables del perfil: usuario y correo."""
     datos = datos if isinstance(datos, dict) else {}
 
-    usuario = str(datos.get("usuario") or "").strip()
-    email = str(datos.get("email") or "").strip()
+    usuario = sin_etiquetas(datos.get("usuario")).strip()
+    email = sin_etiquetas(datos.get("email")).strip()
     actual = str(_campo(cuenta, "usuario", "")).strip()
     existentes = _nombres_existentes(nombres_existentes)
 
@@ -230,10 +231,10 @@ def validar_registro(datos, nombres_existentes=()):
     """Devuelve (valores_normalizados, errores_por_campo)."""
     datos = datos if isinstance(datos, dict) else {}
 
-    nombres = str(datos.get("nombres") or "").strip()
-    apellidos = str(datos.get("apellidos") or "").strip()
-    usuario = str(datos.get("usuario") or "").strip()
-    email = str(datos.get("email") or "").strip()
+    nombres = sin_etiquetas(datos.get("nombres")).strip()
+    apellidos = sin_etiquetas(datos.get("apellidos")).strip()
+    usuario = sin_etiquetas(datos.get("usuario")).strip()
+    email = sin_etiquetas(datos.get("email")).strip()
     password = datos.get("password")
     existentes = _nombres_existentes(nombres_existentes)
 
