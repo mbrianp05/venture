@@ -18,6 +18,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
+from texto import sin_etiquetas
 from .Producto import Producto
 from .Usuario import Usuario
 
@@ -33,8 +34,8 @@ def normalizar_envio(envio):
 
     return {
         "a_domicilio": bool(envio.get("a_domicilio")),
-        "ubicacion": str(envio.get("ubicacion") or "").strip()[:120],
-        "direccion": str(envio.get("direccion") or "").strip()[:200],
+        "ubicacion": sin_etiquetas(envio.get("ubicacion")).strip()[:120],
+        "direccion": sin_etiquetas(envio.get("direccion")).strip()[:200],
     }
 
 

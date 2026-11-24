@@ -637,7 +637,9 @@ async def cambiar_estado_factura(numero, estado, motivo, usuario_nombre=""):
 
         factura.estado = estado
         factura.motivo_cancelacion = (
-            str(motivo or "").strip()[:300] if estado == "cancelada" else ""
+            sin_etiquetas(motivo).strip()[:300]
+            if estado == "cancelada"
+            else ""
         )
         await sesion.flush()
         return factura.to_dict()
@@ -959,7 +961,7 @@ async def crear_envio(usuario_id, codigos, notas=""):
             estado="en_envio",
             creado_por_id=usuario_id,
             creado_por=await sesion.get(Usuario, usuario_id),
-            notas=str(notas or "").strip()[:300],
+            notas=sin_etiquetas(notas).strip()[:300],
         )
 
         for orden, factura in enumerate(facturas):

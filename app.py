@@ -223,7 +223,7 @@ def parsear_envio(valor):
     if not valor.get("a_domicilio"):
         return normalizar_envio({"a_domicilio": False}), None
 
-    direccion = str(valor.get("direccion") or "").strip()
+    direccion = sin_etiquetas(valor.get("direccion")).strip()
     if not direccion:
         return None, "Escribe la dirección de entrega."
 
