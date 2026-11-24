@@ -288,6 +288,10 @@ async def crear_producto(datos):
                 desde=date.fromisoformat(descuento["desde"]),
                 hasta=date.fromisoformat(descuento["hasta"]),
             )
+        else:
+            # Marca la relación como cargada: así `to_dict()` no intenta una
+            # carga diferida (fallaría con MissingGreenlet tras el flush).
+            producto.descuento = None
 
         sesion.add(producto)
         await sesion.flush()
