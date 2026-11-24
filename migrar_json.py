@@ -34,6 +34,7 @@ from models import (
     ProductoFoto,
     Usuario,
 )
+from texto import sin_etiquetas
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -81,7 +82,7 @@ def precio_unitario_json(producto, fecha):
 
 
 async def obtener_categoria(sesion, nombre):
-    nombre = str(nombre or "").strip()[:60]
+    nombre = sin_etiquetas(nombre).strip()[:60]
     if not nombre:
         return None
     categoria = await sesion.scalar(
@@ -156,14 +157,14 @@ async def importar(forzar=False, ejemplo=False):
 
         usuarios_por_nombre = {}
         for datos in usuarios_json:
-            usuario = str(datos.get("usuario") or "").strip()
+            usuario = sin_etiquetas(datos.get("usuario")).strip()
             if not usuario:
                 continue
             cuenta = Usuario(
                 usuario=usuario,
-                nombres=str(datos.get("nombres") or ""),
-                apellidos=str(datos.get("apellidos") or ""),
-                email=str(datos.get("email") or ""),
+                nombres=sin_etiquetas(datos.get("nombres")).strip(),
+                apellidos=sin_etiquetas(datos.get("apellidos")).strip(),
+                email=sin_etiquetas(datos.get("email")).strip(),
                 password_hash=str(datos.get("password_hash") or ""),
                 rol=datos.get("rol") if datos.get("rol") in (
                     "cliente", "empleado", "admin"
@@ -181,10 +182,12 @@ async def importar(forzar=False, ejemplo=False):
             except (TypeError, ValueError):
                 stock = 0
             producto = Producto(
-                nombre=str(datos.get("nombre") or "").strip(),
+                nombre=sin_etiquetas(datos.get("nombre")).strip(),
                 precio=Decimal(str(datos.get("precio") or 0)),
-                unidad_medida=str(datos.get("unidad_medida") or "unidad"),
-                descripcion=str(datos.get("descripcion") or ""),
+                unidad_medida=sin_etiquetas(
+                    datos.get("unidad_medida") or "unidad"
+                ).strip() or "unidad",
+                descripcion=sin_etiquetas(datos.get("descripcion")).strip(),
                 stock=stock,
                 reposicion_pendiente=bool(datos.get("reposicion_pendiente"))
                 and stock <= 0,
@@ -193,7 +196,9 @@ async def importar(forzar=False, ejemplo=False):
                 sesion, datos.get("categoria")
             )
             producto.fotos = [
-                ProductoFoto(url=str(url), orden=indice)
+                ProductoFoto(
+                    url=sin_etiquetas(url).strip(), orden=indice
+                )
                 for indice, url in enumerate(datos.get("fotos") or [])
             ]
             descuento = datos.get("descuento")
@@ -210,7 +215,7 @@ async def importar(forzar=False, ejemplo=False):
         facturas_por_codigo = {}
         codigos_usados = set()
         for datos in facturas_json:
-            usuario_nombre = str(datos.get("usuario") or "").strip()
+            usuario_nombre = sin_etiquetas(datos.get("usuario")).strip()
             cuenta = usuarios_por_nombre.get(usuario_nombre.casefold())
             fecha = fecha_iso(datos.get("fecha"))
             envio = datos.get("envio") if isinstance(datos.get("envio"), dict) else {}
@@ -243,11 +248,13 @@ async def importar(forzar=False, ejemplo=False):
                 total=Decimal(str(datos.get("total") or 0)),
                 estado=estado,
                 a_domicilio=bool(envio.get("a_domicilio")),
-                ubicacion=str(envio.get("ubicacion") or "")[:120],
-                direccion=str(envio.get("direccion") or "")[:200],
-                motivo_cancelacion=str(
-                    datos.get("motivo_cancelacion") or ""
-                )[:300] if estado == "cancelada" else "",
+                ubicacion=sin_etiquetas(envio.get("ubicacion")).strip()[:120],
+                direccion=sin_etiquetas(envio.get("direccion")).strip()[:200],
+                motivo_cancelacion=(
+                    sin_etiquetas(datos.get("motivo_cancelacion")).strip()[:300]
+                    if estado == "cancelada"
+                    else ""
+                ),
             )
 
             for entrada in datos.get("items") or []:
@@ -255,14 +262,14 @@ async def importar(forzar=False, ejemplo=False):
                     producto_json, cantidad = entrada
                 except (TypeError, ValueError):
                     continue
-                nombre = str(producto_json.get("nombre") or "")
+                nombre = sin_etiquetas(producto_json.get("nombre")).strip()
                 producto = productos_por_nombre.get(nombre.casefold())
                 factura.items.append(FacturaItem(
                     producto=producto,
                     producto_nombre=nombre,
-                    unidad_medida=str(
+                    unidad_medida=sin_etiquetas(
                         producto_json.get("unidad_medida") or "unidad"
-                    ),
+                    ).strip() or "unidad",
                     precio_unitario=Decimal(
                         str(precio_unitario_json(producto_json, fecha))
                     ),
@@ -274,7 +281,7 @@ async def importar(forzar=False, ejemplo=False):
         await sesion.flush()
 
         for datos in envios_json:
-            creador = str(datos.get("creado_por") or "").strip()
+            creador = sin_etiquetas(datos.get("creado_por")).strip()
             cuenta = usuarios_por_nombre.get(creador.casefold())
             envio = Envio(
                 id=str(datos.get("id") or os.urandom(16).hex())[:32],
@@ -286,7 +293,7 @@ async def importar(forzar=False, ejemplo=False):
                 creado_por_id=cuenta.id if cuenta else None,
                 creado_por=cuenta,
                 creado_por_legado=creador if not cuenta else "",
-                notas=str(datos.get("notas") or "")[:300],
+                notas=sin_etiquetas(datos.get("notas")).strip()[:300],
             )
             for orden, referencia in enumerate(datos.get("facturas") or []):
                 codigo = (
