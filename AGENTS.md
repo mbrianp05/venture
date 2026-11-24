@@ -91,4 +91,6 @@ Money uses `Numeric(12, 2)` (Decimal in Python, float only in JSON responses). C
 - `Carrito.addChart` is spelled that way (not `addToCart`).
 - Tailwind v4: add colors/fonts in the `@theme` block in `frontend/src/index.css`; there is no `tailwind.config.js`.
 - UI copy uses neutral Spanish (tuteo, not voseo). Branding is **Venture** and prices are formatted in CUP with `es-ES` locale.
+- The Flask static route is disabled (`static_folder=None`): its GET-only catch-all used to answer `405` for non-GET requests on unknown paths. `app.py` serves `/assets/<path:filename>` and `/favicon.svg` explicitly and keeps the SPA fallback in the 404 handler.
+- Product update/delete routes use `<path:nombre>` because product names may contain `/`; keep that converter or names like `Auriculares </h1>` break routing.
 - `README.md` is UTF-8. Older copies were UTF-16LE with a BOM; if you see a BOM, normalize the file to UTF-8.
