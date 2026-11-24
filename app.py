@@ -51,7 +51,9 @@ def cargar_secret_key():
     return clave
 
 
-app = Flask(__name__, static_folder=FRONTEND_DIST, static_url_path="")
+# Sin la carpeta estática automática: su comodín `/<path:filename>` solo
+# admite GET y convertía en 405 cualquier otro método sobre rutas desconocidas.
+app = Flask(__name__, static_folder=None)
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10 MB por foto
 app.config["PROPAGATE_EXCEPTIONS"] = False
 app.config["SECRET_KEY"] = cargar_secret_key()
@@ -241,6 +243,16 @@ def index():
             "detalle": "Ejecuta `npm run build` dentro de frontend/.",
         }), 503
     return send_from_directory(FRONTEND_DIST, "index.html")
+
+
+@app.route("/assets/<path:filename>")
+def frontend_assets(filename):
+    return send_from_directory(os.path.join(FRONTEND_DIST, "assets"), filename)
+
+
+@app.route("/favicon.svg")
+def frontend_favicon():
+    return send_from_directory(FRONTEND_DIST, "favicon.svg")
 
 
 @app.route("/uploads/<path:filename>")
@@ -575,7 +587,9 @@ def add_product():
     return jsonify(producto)
 
 
-@app.route("/api/products/<nombre>", methods=["PUT"])
+# Los nombres de producto admiten cualquier carácter, incluidos `/`; por eso
+# se usa el convertidor `path` en lugar del segmento simple.
+@app.route("/api/products/<path:nombre>", methods=["PUT"])
 @requiere_roles(*ROLES_GESTION)
 def update_product(nombre):
     data = request.get_json(silent=True) or {}
@@ -639,7 +653,7 @@ def update_product(nombre):
     return jsonify(ejecutar(servicios.actualizar_producto(nombre, cambios)))
 
 
-@app.route("/api/products/<nombre>", methods=["DELETE"])
+@app.route("/api/products/<path:nombre>", methods=["DELETE"])
 @requiere_roles(*ROLES_GESTION)
 def delete_product(nombre):
     ejecutar(servicios.eliminar_producto(nombre))
