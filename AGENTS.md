@@ -21,6 +21,7 @@ Inventory, cart, and invoicing app: Flask JSON API + React/Tailwind frontend, ba
 - `servicios.py` — all async business/data operations. Each function opens its own session; errors raise `ErrorServicio(mensaje, estado)` and are converted to JSON by Flask.
 - `autenticacion.py` — password hashing/verification (scrypt via Werkzeug), zxcvbn strength checks, role normalization and field validation. No persistence.
 - `limitador.py` — in-memory login rate limit (per process).
+- `texto.py` — `sin_etiquetas()`: quita etiquetas HTML del texto libre antes de persistirlo.
 - `models/` — SQLAlchemy ORM models, re-exported from `models/__init__.py`:
   - `Usuario.py` — `usuarios` (unique `lower(usuario)`, role check, timestamps).
   - `Producto.py` — `categorias`, `productos`, `producto_fotos`, `producto_descuentos`.
@@ -93,4 +94,5 @@ Money uses `Numeric(12, 2)` (Decimal in Python, float only in JSON responses). C
 - UI copy uses neutral Spanish (tuteo, not voseo). Branding is **Venture** and prices are formatted in CUP with `es-ES` locale.
 - The Flask static route is disabled (`static_folder=None`): its GET-only catch-all used to answer `405` for non-GET requests on unknown paths. `app.py` serves `/assets/<path:filename>` and `/favicon.svg` explicitly and keeps the SPA fallback in the 404 handler.
 - Product update/delete routes use `<path:nombre>` because product names may contain `/`; keep that converter or names like `Auriculares </h1>` break routing.
+- Todo texto libre del usuario pasa por `texto.sin_etiquetas()` antes de guardarse (productos, cuentas, dirección y motivo de facturas, notas de envíos y el importador). Aplícalo en cualquier ruta de escritura nueva; conserva el texto interior (`<b>Hola</b>` → `Hola`) y no toca comparaciones como `3 < 4`.
 - `README.md` is UTF-8. Older copies were UTF-16LE with a BOM; if you see a BOM, normalize the file to UTF-8.
