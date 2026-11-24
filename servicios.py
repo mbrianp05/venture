@@ -36,6 +36,7 @@ from models import (
     estado_inicial,
     normalizar_envio,
 )
+from texto import sin_etiquetas
 
 CENTAVOS = Decimal("0.01")
 
@@ -236,7 +237,7 @@ async def listar_productos():
 
 
 async def _obtener_categoria(sesion, nombre):
-    nombre = str(nombre or "").strip()[:60]
+    nombre = sin_etiquetas(nombre).strip()[:60]
     if not nombre:
         return None
 
@@ -253,7 +254,7 @@ async def _obtener_categoria(sesion, nombre):
 
 
 async def crear_producto(datos):
-    nombre = str(datos["nombre"]).strip()
+    nombre = sin_etiquetas(datos["nombre"]).strip()
     async with sesion_bd() as sesion:
         duplicado = await sesion.scalar(
             select(Producto.id).where(
@@ -267,9 +268,10 @@ async def crear_producto(datos):
         producto = Producto(
             nombre=nombre,
             precio=_dinero(datos["precio"]),
-            unidad_medida=str(datos.get("unidad_medida") or "unidad").strip()
-            or "unidad",
-            descripcion=str(datos.get("descripcion") or "").strip(),
+            unidad_medida=sin_etiquetas(
+                datos.get("unidad_medida") or "unidad"
+            ).strip() or "unidad",
+            descripcion=sin_etiquetas(datos.get("descripcion")).strip(),
             stock=stock,
             reposicion_pendiente=bool(datos.get("reposicion_pendiente"))
             and stock <= 0,
@@ -311,7 +313,9 @@ async def actualizar_producto(nombre_original, cambios):
         if not producto:
             raise ErrorServicio("Producto no encontrado.", 404)
 
-        nuevo_nombre = str(cambios.get("nombre", producto.nombre)).strip()
+        nuevo_nombre = sin_etiquetas(
+            cambios.get("nombre", producto.nombre)
+        ).strip()
         if not nuevo_nombre:
             raise ErrorServicio("El nombre no puede estar vacío.", 400)
 
@@ -331,10 +335,12 @@ async def actualizar_producto(nombre_original, cambios):
             producto.stock = int(cambios["stock"])
         if "unidad_medida" in cambios:
             producto.unidad_medida = (
-                str(cambios["unidad_medida"] or "").strip() or "unidad"
+                sin_etiquetas(cambios["unidad_medida"]).strip() or "unidad"
             )
         if "descripcion" in cambios:
-            producto.descripcion = str(cambios["descripcion"] or "").strip()
+            producto.descripcion = sin_etiquetas(
+                cambios["descripcion"]
+            ).strip()
         if "categoria" in cambios:
             producto.categoria = await _obtener_categoria(
                 sesion, cambios.get("categoria")

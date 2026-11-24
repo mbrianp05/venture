@@ -21,6 +21,7 @@ from limitador import LimitadorIntentos
 from models import ESTADOS_FACTURA, normalizar_envio
 import servicios
 from servicios import ErrorServicio
+from texto import sin_etiquetas
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -179,7 +180,7 @@ def requiere_roles(*roles):
 
 
 def normalizar_categoria(valor):
-    return str(valor or "").strip()[:60]
+    return sin_etiquetas(valor).strip()[:60]
 
 
 def parsear_descuento(valor):
@@ -545,7 +546,7 @@ def get_products():
 @requiere_roles(*ROLES_GESTION)
 def add_product():
     data = request.get_json(silent=True) or {}
-    nombre = str(data.get("nombre") or "").strip()
+    nombre = sin_etiquetas(data.get("nombre")).strip()
     if not nombre:
         return jsonify({"error": "El nombre no puede estar vacío."}), 400
 
@@ -575,9 +576,10 @@ def add_product():
         "nombre": nombre,
         "precio": precio,
         "unidad_medida": (
-            str(data.get("unidad_medida") or "unidad").strip() or "unidad"
+            sin_etiquetas(data.get("unidad_medida") or "unidad").strip()
+            or "unidad"
         ),
-        "descripcion": str(data.get("descripcion") or "").strip(),
+        "descripcion": sin_etiquetas(data.get("descripcion")).strip(),
         "fotos": [url for url in fotos if isinstance(url, str) and url],
         "stock": stock,
         "categoria": normalizar_categoria(data.get("categoria")),
@@ -596,7 +598,7 @@ def update_product(nombre):
     cambios = {}
 
     if "nombre" in data:
-        nuevo_nombre = str(data.get("nombre") or "").strip()
+        nuevo_nombre = sin_etiquetas(data.get("nombre")).strip()
         if not nuevo_nombre:
             return jsonify({"error": "El nombre no puede estar vacío."}), 400
         cambios["nombre"] = nuevo_nombre
@@ -639,10 +641,10 @@ def update_product(nombre):
 
     if "unidad_medida" in data:
         cambios["unidad_medida"] = (
-            str(data.get("unidad_medida") or "").strip() or "unidad"
+            sin_etiquetas(data.get("unidad_medida")).strip() or "unidad"
         )
     if "descripcion" in data:
-        cambios["descripcion"] = str(data.get("descripcion") or "").strip()
+        cambios["descripcion"] = sin_etiquetas(data.get("descripcion")).strip()
     if "categoria" in data:
         cambios["categoria"] = normalizar_categoria(data.get("categoria"))
     if "reposicion_pendiente" in data:
