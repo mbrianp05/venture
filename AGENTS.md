@@ -33,8 +33,8 @@ Inventory, cart, and invoicing app: Flask JSON API + React/Tailwind frontend, ba
 - `migrar_json.py` — one-off importer for the old `data/*.json` files; `--ejemplo` reads the tracked `data/ejemplo_*.json` seed instead.
 - `frontend/` — Vite + React 19 + Tailwind CSS v4. Entrypoint `src/main.jsx`; `src/App.jsx` owns view/cart/invoice state.
 - `frontend/src/components/` — UI pieces; `ProductsView`, `CartPanel`, `InvoicesView`, `ProductForm`, `Pagination`, auth pieces `AuthShell`, `PasswordStrength`, `AppLoader`; admin charts are `AccountingCharts` (Recharts).
-- `frontend/src/pages/` — `LoginPage`, `RegisterPage`, `ProductsPage`, `InvoicesPage`, `UsersPage` (admin), `AccountingPage` (admin), `EnviosPage` (empleado/admin).
-- `frontend/src/routes/` — file-based TanStack Router routes; `_app.jsx` is the authenticated layout and enforces admin-only and staff-only routes, `login.jsx` and `registro.jsx` are public, `_app/usuarios.jsx` and `_app/contabilidad.jsx` are admin-only, `_app/envios.jsx` is staff-only.
+- `frontend/src/pages/` — `LoginPage`, `RegisterPage`, `ProductsPage`, `InvoicesPage`, `UsersPage` (admin), `AccountingPage` (admin), `EnviosPage` (empleado/admin), `NotFoundPage` (404 dentro del layout, con variante `standalone` para el fallback del router).
+- `frontend/src/routes/` — file-based TanStack Router routes; `_app.jsx` is the authenticated layout and enforces admin-only and staff-only routes, `login.jsx` and `registro.jsx` are public, `_app/usuarios.jsx` and `_app/contabilidad.jsx` are admin-only, `_app/envios.jsx` is staff-only, `_app/$.jsx` es el splat que muestra `NotFoundPage` dentro del layout para cualquier ruta desconocida.
 - `frontend/src/auth-context.jsx` — session state (`user`, `loading`, `login`, `register`, `logout`, `refreshUser`).
 - `frontend/src/lib/roles.js` — role labels and permission helpers (`esAdmin`, `puedeGestionarProductos`, `puedeCambiarEstadoFactura`, …).
 - `frontend/src/api.js` — all API calls (`/api` relative). `frontend/src/lib/format.js` — currency/date/unit formatting.
