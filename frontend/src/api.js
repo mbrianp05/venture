@@ -51,8 +51,8 @@ export function createProduct(product) {
   });
 }
 
-export function updateProduct(nombre, product) {
-  return request(`/products/${encodeURIComponent(nombre)}`, {
+export function updateProduct(slug, product) {
+  return request(`/products/${encodeURIComponent(slug)}`, {
     method: "PUT",
     body: JSON.stringify(product),
   });
@@ -81,8 +81,8 @@ export async function uploadProductPhoto(file) {
   return response.json();
 }
 
-export function deleteProduct(nombre) {
-  return request(`/products/${encodeURIComponent(nombre)}`, {
+export function deleteProduct(slug) {
+  return request(`/products/${encodeURIComponent(slug)}`, {
     method: "DELETE",
   });
 }

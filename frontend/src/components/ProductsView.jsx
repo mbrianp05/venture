@@ -87,8 +87,8 @@ function ProductCard({ product, inCart, onAdd, canBuy }) {
   return (
     <Card className="group relative h-full gap-0 overflow-hidden py-0 transition-colors hover:border-foreground/20">
       <Link
-        to="/productos/$nombre"
-        params={{ nombre: product.nombre }}
+        to="/productos/$slug"
+        params={{ slug: product.slug }}
         aria-label={`Ver la ficha de ${product.nombre}`}
         className="absolute inset-0 z-10 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       />

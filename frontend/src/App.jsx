@@ -281,17 +281,17 @@ export default function App() {
   );
 
   const handleUpdateProduct = useCallback(
-    async (nombreOriginal, product) => {
+    async (original, product) => {
       try {
-        const updated = await updateProduct(nombreOriginal, product);
+        const updated = await updateProduct(original.slug, product);
         setProducts((current) =>
           current.map((item) =>
-            item.nombre === nombreOriginal ? updated : item,
+            item.slug === original.slug ? updated : item,
           ),
         );
         setCart((current) =>
           current.map((item) =>
-            item.producto.nombre === nombreOriginal
+            item.producto.nombre === original.nombre
               ? { ...item, producto: updated }
               : item,
           ),
@@ -307,16 +307,16 @@ export default function App() {
   );
 
   const handleDeleteProduct = useCallback(
-    async (nombre) => {
+    async (product) => {
       try {
-        await deleteProduct(nombre);
+        await deleteProduct(product.slug);
         setProducts((current) =>
-          current.filter((product) => product.nombre !== nombre),
+          current.filter((item) => item.slug !== product.slug),
         );
         setCart((current) =>
-          current.filter((item) => item.producto.nombre !== nombre),
+          current.filter((item) => item.producto.nombre !== product.nombre),
         );
-        notify(`"${nombre}" se eliminó del inventario.`);
+        notify(`"${product.nombre}" se eliminó del inventario.`);
         return true;
       } catch (deleteError) {
         notify(deleteError.message, "error");

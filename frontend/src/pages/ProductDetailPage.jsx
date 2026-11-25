@@ -111,7 +111,7 @@ function DiscountSummary({ product, canManage }) {
 }
 
 export default function ProductDetailPage() {
-  const { nombre } = useParams({ from: '/_app/productos/$nombre' })
+  const { slug } = useParams({ from: '/_app/productos/$slug' })
   const navigate = useNavigate()
   const { user } = useAuth()
   const {
@@ -130,12 +130,9 @@ export default function ProductDetailPage() {
   const [eliminando, setEliminando] = useState(false)
 
   const product = useMemo(() => {
-    const buscado = String(nombre || '')
-    return (
-      products.find((item) => item.nombre === buscado) ||
-      products.find((item) => item.nombre.toLowerCase() === buscado.toLowerCase())
-    )
-  }, [products, nombre])
+    const buscado = String(slug || '')
+    return products.find((item) => item.slug === buscado)
+  }, [products, slug])
 
   const categorias = useMemo(
     () =>
@@ -190,12 +187,12 @@ export default function ProductDetailPage() {
     .reduce((total, item) => total + item.cantidad, 0)
 
   async function handleSave(payload) {
-    const updated = await onUpdateProduct(product.nombre, payload)
+    const updated = await onUpdateProduct(product, payload)
     if (!updated) return false
-    if (updated.nombre !== product.nombre) {
+    if (updated.slug !== product.slug) {
       navigate({
-        to: '/productos/$nombre',
-        params: { nombre: updated.nombre },
+        to: '/productos/$slug',
+        params: { slug: updated.slug },
         replace: true,
       })
     }
@@ -204,7 +201,7 @@ export default function ProductDetailPage() {
 
   async function handleDelete() {
     setEliminando(true)
-    const eliminado = await onDeleteProduct(product.nombre)
+    const eliminado = await onDeleteProduct(product)
     setEliminando(false)
     if (eliminado) navigate({ to: '/', replace: true })
   }
