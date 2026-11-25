@@ -589,11 +589,9 @@ def add_product():
     return jsonify(producto)
 
 
-# Los nombres de producto admiten cualquier carácter, incluidos `/`; por eso
-# se usa el convertidor `path` en lugar del segmento simple.
-@app.route("/api/products/<path:nombre>", methods=["PUT"])
+@app.route("/api/products/<slug>", methods=["PUT"])
 @requiere_roles(*ROLES_GESTION)
-def update_product(nombre):
+def update_product(slug):
     data = request.get_json(silent=True) or {}
     cambios = {}
 
@@ -652,13 +650,13 @@ def update_product(nombre):
             data.get("reposicion_pendiente")
         )
 
-    return jsonify(ejecutar(servicios.actualizar_producto(nombre, cambios)))
+    return jsonify(ejecutar(servicios.actualizar_producto(slug, cambios)))
 
 
-@app.route("/api/products/<path:nombre>", methods=["DELETE"])
+@app.route("/api/products/<slug>", methods=["DELETE"])
 @requiere_roles(*ROLES_GESTION)
-def delete_product(nombre):
-    ejecutar(servicios.eliminar_producto(nombre))
+def delete_product(slug):
+    ejecutar(servicios.eliminar_producto(slug))
     return jsonify({"success": True})
 
 

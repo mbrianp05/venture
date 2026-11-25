@@ -21,6 +21,8 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import DeclarativeBase
 
+from slug import posibles_slugs
+
 # La configuración de la base vive en ``.env`` (ignorado por git). Las
 # variables ya definidas en el entorno real tienen prioridad.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -96,6 +98,40 @@ async def crear_tablas():
             "DROP CONSTRAINT IF EXISTS envio_facturas_factura_id_key"
         ))
 
+        # Bases creadas antes de los slugs: agrega la columna, rellena los
+        # slugs de los productos existentes y la deja obligatoria y única.
+        existe_slug = await conexion.scalar(text(
+            "SELECT 1 FROM information_schema.columns "
+            "WHERE table_name = 'productos' AND column_name = 'slug'"
+        ))
+        if not existe_slug:
+            await conexion.execute(text(
+                "ALTER TABLE productos ADD COLUMN slug VARCHAR(140)"
+            ))
+            filas = (await conexion.execute(text(
+                "SELECT id, nombre FROM productos ORDER BY id"
+            ))).all()
+            usados = set()
+            for producto_id, nombre in filas:
+                for candidato in posibles_slugs(nombre):
+                    if candidato not in usados:
+                        usados.add(candidato)
+                        await conexion.execute(
+                            text(
+                                "UPDATE productos SET slug = :slug "
+                                "WHERE id = :id"
+                            ),
+                            {"slug": candidato, "id": producto_id},
+                        )
+                        break
+            await conexion.execute(text(
+                "ALTER TABLE productos ALTER COLUMN slug SET NOT NULL"
+            ))
+            await conexion.execute(text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_productos_slug "
+                "ON productos (slug)"
+            ))
+
 
 async def inicializar_base(sembrar=True):
     """Prepara el esquema y los datos mínimos (configuración y ejemplos)."""
@@ -120,10 +156,17 @@ async def inicializar_base(sembrar=True):
                         ("Cuentas de cristal", Decimal("5.00"), "unidad"),
                         ("Alambre de plata", Decimal("3.50"), "metro"),
                     )
+                    slugs = set()
                     for nombre, precio, unidad in ejemplos:
+                        slug = next(
+                            candidato for candidato in posibles_slugs(nombre)
+                            if candidato not in slugs
+                        )
+                        slugs.add(slug)
                         sesion.add(
                             Producto(
                                 nombre=nombre,
+                                slug=slug,
                                 precio=precio,
                                 unidad_medida=unidad,
                             )

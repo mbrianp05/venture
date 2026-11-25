@@ -36,6 +36,7 @@ from models import (
     estado_inicial,
     normalizar_envio,
 )
+from slug import posibles_slugs
 from texto import sin_etiquetas
 
 CENTAVOS = Decimal("0.01")
@@ -265,6 +266,16 @@ async def _obtener_categoria(sesion, nombre):
     return categoria
 
 
+async def _slug_libre(sesion, nombre, producto_id=None):
+    """Primer slug derivado de ``nombre`` que no usa otro producto."""
+    for candidato in posibles_slugs(nombre):
+        consulta = select(Producto.id).where(Producto.slug == candidato)
+        if producto_id is not None:
+            consulta = consulta.where(Producto.id != producto_id)
+        if not await sesion.scalar(consulta):
+            return candidato
+
+
 async def crear_producto(datos):
     nombre = sin_etiquetas(datos["nombre"]).strip()
     async with sesion_bd() as sesion:
@@ -279,6 +290,7 @@ async def crear_producto(datos):
         stock = int(datos.get("stock") or 0)
         producto = Producto(
             nombre=nombre,
+            slug=await _slug_libre(sesion, nombre),
             precio=_dinero(datos["precio"]),
             unidad_medida=sin_etiquetas(
                 datos.get("unidad_medida") or "unidad"
@@ -312,14 +324,11 @@ async def crear_producto(datos):
         return producto.to_dict()
 
 
-async def actualizar_producto(nombre_original, cambios):
+async def actualizar_producto(slug_original, cambios):
     async with sesion_bd() as sesion:
         producto = await sesion.scalar(
             select(Producto)
-            .where(
-                func.lower(Producto.nombre)
-                == str(nombre_original).strip().casefold()
-            )
+            .where(Producto.slug == str(slug_original).strip())
             .with_for_update(of=Producto)
         )
         if not producto:
@@ -341,6 +350,7 @@ async def actualizar_producto(nombre_original, cambios):
             raise ErrorServicio("Ya existe un producto con ese nombre.", 409)
 
         producto.nombre = nuevo_nombre
+        producto.slug = await _slug_libre(sesion, nuevo_nombre, producto.id)
         if "precio" in cambios:
             producto.precio = _dinero(cambios["precio"])
         if "stock" in cambios:
@@ -393,12 +403,10 @@ async def actualizar_producto(nombre_original, cambios):
         return producto.to_dict()
 
 
-async def eliminar_producto(nombre):
+async def eliminar_producto(slug):
     async with sesion_bd() as sesion:
         producto = await sesion.scalar(
-            select(Producto).where(
-                func.lower(Producto.nombre) == str(nombre).strip().casefold()
-            )
+            select(Producto).where(Producto.slug == str(slug).strip())
         )
         if not producto:
             raise ErrorServicio("Producto no encontrado.", 404)

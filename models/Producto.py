@@ -54,6 +54,9 @@ class Producto(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     nombre: Mapped[str] = mapped_column(String(120), nullable=False)
+    slug: Mapped[str] = mapped_column(
+        String(140), nullable=False, unique=True
+    )
     precio: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     unidad_medida: Mapped[str] = mapped_column(
         String(30), nullable=False, default="unidad"
@@ -120,6 +123,7 @@ class Producto(Base):
             }
         return {
             "nombre": self.nombre,
+            "slug": self.slug,
             "precio": float(self.precio),
             "unidad_medida": self.unidad_medida,
             "descripcion": self.descripcion,
