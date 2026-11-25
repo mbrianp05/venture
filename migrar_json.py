@@ -34,6 +34,7 @@ from models import (
     ProductoFoto,
     Usuario,
 )
+from slug import posibles_slugs
 from texto import sin_etiquetas
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -176,13 +177,21 @@ async def importar(forzar=False, ejemplo=False):
         await sesion.flush()
 
         productos_por_nombre = {}
+        slugs_usados = set()
         for datos in inventario_json:
             try:
                 stock = max(0, int(datos.get("stock") or 0))
             except (TypeError, ValueError):
                 stock = 0
+            nombre = sin_etiquetas(datos.get("nombre")).strip()
+            slug = next(
+                candidato for candidato in posibles_slugs(nombre)
+                if candidato not in slugs_usados
+            )
+            slugs_usados.add(slug)
             producto = Producto(
-                nombre=sin_etiquetas(datos.get("nombre")).strip(),
+                nombre=nombre,
+                slug=slug,
                 precio=Decimal(str(datos.get("precio") or 0)),
                 unidad_medida=sin_etiquetas(
                     datos.get("unidad_medida") or "unidad"
