@@ -374,7 +374,7 @@ frontend/
       _app/usuarios.jsx        # Solo administración
       _app/contabilidad.jsx    # Solo administración
       _app/envios.jsx          # Empleados y administración
-      _app/productos/$nombre.jsx
+      _app/productos/$slug.jsx
 AGENTS.md                      # Notas para agentes y desarrollo
 README.md
 ```
@@ -387,7 +387,7 @@ PostgreSQL normalizado y gestionado con SQLAlchemy 2 async:
 
 - `usuarios` — cuentas y roles (`cliente`, `empleado`, `admin`).
 - `categorias` — una fila por categoría; `productos.categoria_id` es FK opcional.
-- `productos` — precio, unidad, descripción, stock y aviso de reposición.
+- `productos` — `slug` único para la URL, precio, unidad, descripción, stock y aviso de reposición.
 - `producto_fotos` — una fila por foto, ordenada; la primera es la portada.
 - `producto_descuentos` — descuento uno a uno por producto (`porcentaje`, `desde`, `hasta`).
 - `facturas` — cabecera con `numero` por usuario, `codigo` público, entrega, totales y estado.
@@ -413,8 +413,8 @@ El dinero usa `Numeric(12, 2)` y la unicidad sin distinguir mayúsculas se respa
 | `PATCH` | `/api/admin/usuarios/<nombre>/rol` | Cambia el rol de una cuenta. Solo `admin`. |
 | `GET` | `/api/products` | Lista todos los productos. Público. |
 | `POST` | `/api/products` | Crea un producto. `empleado` o `admin`. |
-| `PUT` | `/api/products/<nombre>` | Actualiza un producto por su nombre actual. `empleado` o `admin`. |
-| `DELETE` | `/api/products/<nombre>` | Elimina un producto. `empleado` o `admin`. |
+| `PUT` | `/api/products/<slug>` | Actualiza un producto por su slug. `empleado` o `admin`. |
+| `DELETE` | `/api/products/<slug>` | Elimina un producto por su slug. `empleado` o `admin`. |
 | `POST` | `/api/uploads` | Sube una foto (`multipart/form-data`, campo `foto`). `empleado` o `admin`. |
 | `GET` | `/api/config` | Devuelve la configuración actual (`costo_envio`). |
 | `PUT` | `/api/config` | Actualiza el costo fijo de envío. Solo `admin`. |
@@ -514,13 +514,15 @@ Las facturas canceladas no suman a los totales ni a las series de ventas.
 - Se acepta `fotos` como array o el campo heredado `foto` como string.
 - Devuelve **400** si los datos son inválidos y **409** si el nombre ya existe.
 
-### PUT /api/products/<nombre>
+### PUT /api/products/<slug>
 
-Acepta los mismos campos y permite cambiar el nombre. Responde **404** si el producto no existe, **400** si los datos son inválidos y **409** si el nuevo nombre choca con otro producto.
+Acepta los mismos campos y permite cambiar el nombre. Al renombrar se genera un slug nuevo (con sufijo numérico si ya estuviera ocupado) y la respuesta lo devuelve actualizado. Responde **404** si el producto no existe, **400** si los datos son inválidos y **409** si el nuevo nombre choca con otro producto.
 
-### DELETE /api/products/<nombre>
+### DELETE /api/products/<slug>
 
 Elimina el producto y responde `{ "success": true }`. Si no existe, responde **404**.
+
+> El `slug` se genera a partir del nombre y es lo que identifica al producto en las URLs (`/productos/<slug>`, `PUT` y `DELETE`). Cada producto lo devuelve en `GET /api/products` como campo `slug`.
 
 ### POST /api/uploads
 

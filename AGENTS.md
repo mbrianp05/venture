@@ -22,6 +22,7 @@ Inventory, cart, and invoicing app: Flask JSON API + React/Tailwind frontend, ba
 - `autenticacion.py` — password hashing/verification (scrypt via Werkzeug), zxcvbn strength checks, role normalization and field validation. No persistence.
 - `limitador.py` — in-memory login rate limit (per process).
 - `texto.py` — `sin_etiquetas()`: quita etiquetas HTML del texto libre antes de persistirlo.
+- `slug.py` — `generar_slug()`/`posibles_slugs()`: slugs ASCII y variantes numeradas para los productos.
 - `models/` — SQLAlchemy ORM models, re-exported from `models/__init__.py`:
   - `Usuario.py` — `usuarios` (unique `lower(usuario)`, role check, timestamps).
   - `Producto.py` — `categorias`, `productos`, `producto_fotos`, `producto_descuentos`.
@@ -46,7 +47,7 @@ Normalized around independent entities and relationship tables:
 
 - `usuarios` — accounts and roles (`cliente`, `empleado`, `admin`).
 - `categorias` — one row per category; `productos.categoria_id` is a nullable FK. Unique case-insensitive name.
-- `productos` — price, unit, description, stock, restock flag.
+- `productos` — unique URL `slug`, price, unit, description, stock, restock flag.
 - `producto_fotos` — one row per photo, ordered; the first is the cover.
 - `producto_descuentos` — one-to-one discount per product (`porcentaje`, `desde`, `hasta`).
 - `facturas` — invoice header, per-user `numero`, public `codigo`, delivery data, totals, state. `usuario_id` is a nullable FK; `usuario_legado` keeps the original name only for imported invoices whose account no longer exists.
@@ -59,7 +60,7 @@ Money uses `Numeric(12, 2)` (Decimal in Python, float only in JSON responses). C
 
 ## API
 
-`GET/POST /api/products`, `PUT/DELETE /api/products/<nombre>`, `POST /api/uploads`, `GET/PUT /api/config`, `GET/POST /api/invoices`, `PATCH /api/invoices/<numero>`, `GET/POST /api/envios`, `PATCH /api/envios/<id>`, `GET /api/contabilidad`, `GET /api/admin/usuarios`, `PATCH /api/admin/usuarios/<nombre>/rol`, `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`, `GET /api/auth/estado`, `PATCH /api/auth/perfil`, `POST /api/auth/password`.
+`GET/POST /api/products`, `PUT/DELETE /api/products/<slug>`, `POST /api/uploads`, `GET/PUT /api/config`, `GET/POST /api/invoices`, `PATCH /api/invoices/<numero>`, `GET/POST /api/envios`, `PATCH /api/envios/<id>`, `GET /api/contabilidad`, `GET /api/admin/usuarios`, `PATCH /api/admin/usuarios/<nombre>/rol`, `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`, `GET /api/auth/estado`, `PATCH /api/auth/perfil`, `POST /api/auth/password`.
 
 ## Gotchas
 
@@ -93,6 +94,6 @@ Money uses `Numeric(12, 2)` (Decimal in Python, float only in JSON responses). C
 - Tailwind v4: add colors/fonts in the `@theme` block in `frontend/src/index.css`; there is no `tailwind.config.js`.
 - UI copy uses neutral Spanish (tuteo, not voseo). Branding is **Venture** and prices are formatted in CUP with `es-ES` locale.
 - The Flask static route is disabled (`static_folder=None`): its GET-only catch-all used to answer `405` for non-GET requests on unknown paths. `app.py` serves `/assets/<path:filename>` and `/favicon.svg` explicitly and keeps the SPA fallback in the 404 handler.
-- Product update/delete routes use `<path:nombre>` because product names may contain `/`; keep that converter or names like `Auriculares </h1>` break routing.
+- Product update/delete routes and the product detail page use the unique `slug` column (`<slug>` / `/productos/$slug`), never the name. `slug.py` generates it from the sanitized name, adding `-2`, `-3` … when taken; renaming a product regenerates its slug and the response carries the new one. Update/delete endpoints return `404` for an unknown slug.
 - Todo texto libre del usuario pasa por `texto.sin_etiquetas()` antes de guardarse (productos, cuentas, dirección y motivo de facturas, notas de envíos y el importador). Aplícalo en cualquier ruta de escritura nueva; conserva el texto interior (`<b>Hola</b>` → `Hola`) y no toca comparaciones como `3 < 4`.
 - `README.md` is UTF-8. Older copies were UTF-16LE with a BOM; if you see a BOM, normalize the file to UTF-8.
