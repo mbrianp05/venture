@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { ArrowUpRight, Filter, PackageOpen, Plus, Search, Tag, X } from 'lucide-react'
+import { ArrowUpRight, Filter, ImageOff, PackageOpen, Plus, Search, Tag, X } from 'lucide-react'
 import { formatCurrency } from '../lib/format'
 import { descuentoVigente, precioVigente } from '../lib/pricing'
 import { useDebouncedValue } from '../lib/useDebounce'
@@ -47,7 +47,7 @@ function ProductCover({ product, inCart }) {
 
   return (
     <div className="relative aspect-[4/3] overflow-hidden border-b border-border bg-muted/30">
-      {showPhoto && (
+      {showPhoto ? (
         <img
           src={cover}
           alt={product.nombre}
@@ -56,6 +56,15 @@ function ProductCover({ product, inCart }) {
           onError={() => setFailedSrc(cover)}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
         />
+      ) : (
+        <div
+          className="flex h-full w-full flex-col items-center justify-center gap-2 bg-muted/40 text-muted-foreground"
+          role="img"
+          aria-label={`${product.nombre} no tiene foto`}
+        >
+          <ImageOff className="size-8" strokeWidth={1.5} aria-hidden="true" />
+          <span className="text-xs font-medium tracking-wide">Sin foto</span>
+        </div>
       )}
 
       {descuento && (
