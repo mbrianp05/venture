@@ -16,6 +16,7 @@ import { useAppState } from '../app-context'
 import { useAuth } from '../auth-context'
 import { formatCurrency } from '../lib/format'
 import { normalizarTexto } from '../lib/text'
+import { useDebouncedValue } from '../lib/useDebounce'
 import { esAdmin } from '../lib/roles'
 import Pagination from '../components/Pagination'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -171,6 +172,7 @@ export default function EnviosPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [busqueda, setBusqueda] = useState('')
+  const busquedaDiferida = useDebouncedValue(busqueda)
   const [seleccion, setSeleccion] = useState([])
   const [notas, setNotas] = useState('')
   const [paginaDisponibles, setPaginaDisponibles] = useState(1)
@@ -202,7 +204,7 @@ export default function EnviosPage() {
   }, [cargar])
 
   const disponiblesFiltradas = useMemo(() => {
-    const termino = normalizarTexto(busqueda)
+    const termino = normalizarTexto(busquedaDiferida)
     return datos.facturas_disponibles
       .filter((factura) => {
         if (!termino) return true
@@ -218,7 +220,7 @@ export default function EnviosPage() {
         return normalizarTexto(texto).includes(termino)
       })
       .sort((a, b) => b.numero - a.numero)
-  }, [datos.facturas_disponibles, busqueda])
+  }, [datos.facturas_disponibles, busquedaDiferida])
 
   const totalPaginasDisponibles = Math.max(
     1,

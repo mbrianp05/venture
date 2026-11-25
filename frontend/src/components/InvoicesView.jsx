@@ -11,6 +11,7 @@ import {
 import { formatCurrency, formatDate } from '../lib/format'
 import { precioVigente } from '../lib/pricing'
 import { normalizarTexto } from '../lib/text'
+import { useDebouncedValue } from '../lib/useDebounce'
 import DateRangePicker from './DateRangePicker'
 import InvoiceQR from './InvoiceQR'
 import Pagination from './Pagination'
@@ -527,6 +528,10 @@ export default function InvoicesView({
   const [pagina, setPagina] = useState(1)
   const [alcance, setAlcance] = useState('todas')
 
+  // El campo responde al instante; el filtrado espera a que se deje de escribir.
+  const busquedaDiferida = useDebouncedValue(busqueda)
+  const subtotalDiferido = useDebouncedValue(subtotalMin)
+
   const puedeAlternarAlcance = showOwner && Boolean(usuarioActual)
   const facturasBase = useMemo(() => {
     if (!puedeAlternarAlcance || alcance === 'todas') return invoices
@@ -538,9 +543,9 @@ export default function InvoicesView({
   }, [invoices, alcance, puedeAlternarAlcance, usuarioActual])
 
   const filtrosActivos =
-    busqueda.trim() !== '' ||
+    busquedaDiferida.trim() !== '' ||
     Boolean(periodo.desde || periodo.hasta) ||
-    subtotalMin.trim() !== ''
+    subtotalDiferido.trim() !== ''
 
   const ordenCreacion = useMemo(() => {
     const mapa = new Map()
@@ -551,8 +556,9 @@ export default function InvoicesView({
   }, [invoices])
 
   const sorted = useMemo(() => {
-    const termino = normalizarTexto(busqueda)
-    const minimo = subtotalMin.trim() === '' ? null : Number(subtotalMin)
+    const termino = normalizarTexto(busquedaDiferida)
+    const minimo =
+      subtotalDiferido.trim() === '' ? null : Number(subtotalDiferido)
 
     return facturasBase
       .filter((invoice) => {
@@ -584,7 +590,7 @@ export default function InvoicesView({
         const posicionB = ordenCreacion.get(claveFactura(b)) ?? -1
         return posicionB - posicionA
       })
-  }, [facturasBase, busqueda, periodo, subtotalMin, ordenCreacion])
+  }, [facturasBase, busquedaDiferida, periodo, subtotalDiferido, ordenCreacion])
 
   const totalFiltrado = sorted.reduce(
     (total, invoice) =>

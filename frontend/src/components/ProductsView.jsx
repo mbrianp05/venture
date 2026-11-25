@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { ArrowUpRight, Filter, PackageOpen, Plus, Search, Tag, X } from 'lucide-react'
 import { formatCurrency } from '../lib/format'
 import { descuentoVigente, precioVigente } from '../lib/pricing'
+import { useDebouncedValue } from '../lib/useDebounce'
 import ProductForm from './ProductForm'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -202,6 +203,7 @@ export default function ProductsView({
 }) {
   const [showForm, setShowForm] = useState(false)
   const [categoria, setCategoria] = useState('')
+  const busquedaDiferida = useDebouncedValue(search)
 
   const categorias = useMemo(() => {
     const conteo = new Map()
@@ -223,14 +225,14 @@ export default function ProductsView({
   )
 
   const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase()
+    const term = busquedaDiferida.trim().toLowerCase()
     return products.filter((product) => {
       if (categoria && product.categoria !== categoria) return false
       if (!term) return true
       const haystack = `${product.nombre} ${product.descripcion || ''} ${product.categoria || ''}`.toLowerCase()
       return haystack.includes(term)
     })
-  }, [products, search, categoria])
+  }, [products, busquedaDiferida, categoria])
 
   function quantityInCart(nombre) {
     return cart
@@ -238,8 +240,9 @@ export default function ProductsView({
       .reduce((total, item) => total + item.cantidad, 0)
   }
 
+  const termino = busquedaDiferida.trim()
   const hasSearch = search.trim().length > 0
-  const hasFilters = hasSearch || Boolean(categoria)
+  const hasFilters = termino.length > 0 || Boolean(categoria)
 
   function limpiarFiltros() {
     onSearchChange('')
@@ -385,9 +388,9 @@ export default function ProductsView({
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
             {categoria
               ? `No hay productos en la categoría «${categoria}»${
-                  hasSearch ? ` para “${search.trim()}”` : ''
+                  termino ? ` para “${termino}”` : ''
                 }.`
-              : `No encontramos productos para “${search.trim()}”. Prueba con otro nombre o descripción.`}
+              : `No encontramos productos para “${termino}”. Prueba con otro nombre o descripción.`}
           </p>
           <Button
             type="button"

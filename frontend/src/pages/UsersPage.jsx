@@ -13,6 +13,7 @@ import { useAuth } from '../auth-context'
 import Pagination from '../components/Pagination'
 import { ROLES, ROL_INFO, rolDe } from '../lib/roles'
 import { normalizarTexto } from '../lib/text'
+import { useDebouncedValue } from '../lib/useDebounce'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -70,6 +71,7 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busqueda, setBusqueda] = useState('')
+  const busquedaDiferida = useDebouncedValue(busqueda)
   const [guardando, setGuardando] = useState(null)
   const [pagina, setPagina] = useState(1)
 
@@ -99,7 +101,7 @@ export default function UsersPage() {
   }, [usuarios])
 
   const filtrados = useMemo(() => {
-    const termino = normalizarTexto(busqueda)
+    const termino = normalizarTexto(busquedaDiferida)
     if (!termino) return usuarios
     return usuarios.filter((usuario) => {
       const texto = normalizarTexto(
@@ -112,7 +114,7 @@ export default function UsersPage() {
       )
       return texto.includes(termino)
     })
-  }, [usuarios, busqueda])
+  }, [usuarios, busquedaDiferida])
 
   const unicoAdmin = conteo.admin <= 1
   const totalCuentas = conteo.cliente + conteo.empleado + conteo.admin
@@ -275,7 +277,7 @@ export default function UsersPage() {
             <Search className="mx-auto size-6 text-muted-foreground" />
             <h2 className="mt-3 text-base font-semibold">Sin coincidencias</h2>
             <p className="mx-auto mt-1.5 max-w-xs text-sm leading-snug text-muted-foreground">
-              No encontramos cuentas para «{busqueda.trim()}». Prueba con otro
+              No encontramos cuentas para «{busquedaDiferida.trim()}». Prueba con otro
               nombre o nombre de usuario.
             </p>
             <Button
